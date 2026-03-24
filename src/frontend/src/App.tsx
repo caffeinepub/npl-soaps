@@ -17,6 +17,7 @@ import {
   Phone,
   Plus,
   Shield,
+  ShoppingBag,
   ShoppingCart,
   Star,
   Truck,
@@ -26,6 +27,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSubmitContactForm } from "./hooks/useQueries";
+
+const WHATSAPP_NUMBER = "8801945273697";
 
 const products = [
   {
@@ -78,6 +81,16 @@ const products = [
   },
 ];
 
+const productOptions = [
+  { value: "Rose Glow Soap ৳450", label: "Rose Glow Soap — ৳450" },
+  { value: "Charcoal Detox Soap ৳480", label: "Charcoal Detox Soap — ৳480" },
+  { value: "Lavender Dream Soap ৳420", label: "Lavender Dream Soap — ৳420" },
+  { value: "Honey Oat Soap ৳460", label: "Honey Oat Soap — ৳460" },
+  { value: "Citrus Fresh Soap ৳430", label: "Citrus Fresh Soap — ৳430" },
+  { value: "Aloe Vera Soap ৳440", label: "Aloe Vera Soap — ৳440" },
+  { value: "Custom / Other", label: "Custom / Other" },
+];
+
 interface CartItem {
   id: number;
   name: string;
@@ -85,6 +98,21 @@ interface CartItem {
   priceNum: number;
   image: string;
   qty: number;
+}
+
+interface ReviewItem {
+  id: number;
+  name: string;
+  rating: number;
+  feedback: string;
+  date: string;
+}
+
+interface OrderForm {
+  name: string;
+  phone: string;
+  address: string;
+  product: string;
 }
 
 function useScrollAnimation() {
@@ -134,13 +162,66 @@ export default function App() {
     message: "",
   });
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [reviewForm, setReviewForm] = useState({
+    name: "",
+    rating: 5,
+    feedback: "",
+  });
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
   const submitContact = useSubmitContactForm();
+
+  // Order modal state
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [orderFromCart, setOrderFromCart] = useState(false);
+  const [orderForm, setOrderForm] = useState<OrderForm>({
+    name: "",
+    phone: "",
+    address: "",
+    product: "",
+  });
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.priceNum * item.qty,
     0,
   );
+
+  function openOrderModal(fromCart = false) {
+    setOrderFromCart(fromCart);
+    setOrderForm({ name: "", phone: "", address: "", product: "" });
+    setOrderModalOpen(true);
+    if (fromCart) setCartOpen(false);
+  }
+
+  function handleOrderSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    let productLine: string;
+    if (orderFromCart && cart.length > 0) {
+      productLine = cart
+        .map((item) => `${item.name} x${item.qty} (${item.price} each)`)
+        .join(", ");
+    } else {
+      productLine = orderForm.product || "Not specified";
+    }
+
+    const message = [
+      "🛒 *New Order - Npl Soaps*",
+      "",
+      `👤 Name: ${orderForm.name}`,
+      `📞 Phone: ${orderForm.phone}`,
+      `📍 Address: ${orderForm.address}`,
+      `🧼 Product: ${productLine}`,
+    ].join("\n");
+
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+
+    toast.success("Redirecting to WhatsApp to confirm your order!");
+    setOrderModalOpen(false);
+    setOrderForm({ name: "", phone: "", address: "", product: "" });
+  }
 
   function addToCart(product: (typeof products)[0]) {
     setCart((prev) => {
@@ -235,8 +316,17 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Cart + Mobile Menu */}
-          <div className="flex items-center gap-3">
+          {/* Order Now + Cart + Mobile Menu */}
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button
+              onClick={() => openOrderModal(false)}
+              data-ocid="nav.order_now.primary_button"
+              size="sm"
+              className="hidden md:flex bg-gold hover:bg-gold-dark text-white font-body text-xs px-4 py-2 rounded-full tracking-wide transition-all duration-200 items-center gap-1.5"
+            >
+              <ShoppingBag size={14} />
+              Order Now
+            </Button>
             <button
               type="button"
               onClick={() => setCartOpen(true)}
@@ -290,6 +380,17 @@ export default function App() {
                     {link}
                   </a>
                 ))}
+                <Button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openOrderModal(false);
+                  }}
+                  data-ocid="nav.mobile_order.primary_button"
+                  className="bg-gold hover:bg-gold-dark text-white font-body text-sm rounded-full w-full mt-1 flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag size={15} />
+                  Order Now
+                </Button>
               </nav>
             </motion.div>
           )}
@@ -324,14 +425,25 @@ export default function App() {
                   Handcrafted soaps made with natural ingredients for healthy,
                   glowing skin
                 </p>
-                <a href="#products" data-ocid="hero.primary_button">
+                <div className="flex flex-wrap gap-3">
+                  <a href="#products" data-ocid="hero.primary_button">
+                    <Button
+                      size="lg"
+                      className="bg-gold hover:bg-gold-dark text-white font-body font-medium px-8 py-3 rounded-full tracking-wide transition-all duration-300 hover:shadow-lg hover:scale-105"
+                    >
+                      Shop Now <ChevronRight size={18} className="ml-1" />
+                    </Button>
+                  </a>
                   <Button
                     size="lg"
-                    className="bg-gold hover:bg-gold-dark text-white font-body font-medium px-8 py-3 rounded-full tracking-wide transition-all duration-300 hover:shadow-lg hover:scale-105"
+                    onClick={() => openOrderModal(false)}
+                    data-ocid="hero.order_now.primary_button"
+                    className="bg-white/15 backdrop-blur-sm hover:bg-white/25 border border-white/50 text-white font-body font-medium px-8 py-3 rounded-full tracking-wide transition-all duration-300 hover:shadow-lg hover:scale-105"
                   >
-                    Shop Now <ChevronRight size={18} className="ml-1" />
+                    <ShoppingBag size={18} className="mr-2" />
+                    Order Now
                   </Button>
-                </a>
+                </div>
               </motion.div>
             </div>
           </div>
@@ -604,6 +716,199 @@ export default function App() {
         </div>
       </section>
 
+      {/* Leave a Review Section */}
+      <section className="py-20 md:py-24 bg-white">
+        <div className="max-w-5xl mx-auto px-6 md:px-8">
+          <FadeSection>
+            <div className="text-center mb-14">
+              <p className="text-gold font-body text-xs tracking-[0.3em] uppercase mb-3">
+                Your Voice Matters
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-4">
+                Share Your Experience
+              </h2>
+              <div className="gold-divider" />
+            </div>
+          </FadeSection>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Review Form */}
+            <FadeSection>
+              <div className="bg-white rounded-2xl p-8 shadow-card border border-border">
+                <h3 className="font-display text-xl font-semibold text-foreground mb-6">
+                  Leave a Review
+                </h3>
+                <form
+                  data-ocid="review.dialog"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!reviewForm.name.trim() || !reviewForm.feedback.trim())
+                      return;
+                    const newReview: ReviewItem = {
+                      id: Date.now(),
+                      name: reviewForm.name.trim(),
+                      rating: reviewForm.rating,
+                      feedback: reviewForm.feedback.trim(),
+                      date: new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }),
+                    };
+                    setReviews((prev) => [newReview, ...prev]);
+                    setReviewForm({ name: "", rating: 5, feedback: "" });
+                    setReviewHoverRating(0);
+                    toast.success("Thank you for your review!");
+                  }}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label
+                      className="font-body text-sm font-medium text-foreground mb-1.5 block"
+                      htmlFor="review-name"
+                    >
+                      Your Name
+                    </label>
+                    <Input
+                      id="review-name"
+                      data-ocid="review.input"
+                      placeholder="e.g. Fatima K."
+                      value={reviewForm.name}
+                      onChange={(e) =>
+                        setReviewForm((p) => ({ ...p, name: e.target.value }))
+                      }
+                      required
+                      className="font-body border-border focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <span className="font-body text-sm font-medium text-foreground mb-2 block">
+                      Your Rating
+                    </span>
+                    <div className="flex gap-2" data-ocid="review.toggle">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() =>
+                            setReviewForm((p) => ({ ...p, rating: star }))
+                          }
+                          onMouseEnter={() => setReviewHoverRating(star)}
+                          onMouseLeave={() => setReviewHoverRating(0)}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <Star
+                            size={28}
+                            fill={
+                              (reviewHoverRating || reviewForm.rating) >= star
+                                ? "currentColor"
+                                : "none"
+                            }
+                            className={
+                              (reviewHoverRating || reviewForm.rating) >= star
+                                ? "text-gold"
+                                : "text-warm-gray"
+                            }
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      className="font-body text-sm font-medium text-foreground mb-1.5 block"
+                      htmlFor="review-feedback"
+                    >
+                      Your Feedback
+                    </label>
+                    <Textarea
+                      id="review-feedback"
+                      data-ocid="review.textarea"
+                      placeholder="Tell us about your experience with our soaps..."
+                      value={reviewForm.feedback}
+                      onChange={(e) =>
+                        setReviewForm((p) => ({
+                          ...p,
+                          feedback: e.target.value,
+                        }))
+                      }
+                      required
+                      rows={4}
+                      className="font-body border-border focus:border-gold resize-none"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    data-ocid="review.submit_button"
+                    className="w-full bg-gold hover:bg-gold/90 text-white font-body font-semibold rounded-xl py-3"
+                  >
+                    Submit Review
+                  </Button>
+                </form>
+              </div>
+            </FadeSection>
+
+            {/* Submitted Reviews */}
+            <FadeSection delay={0.15}>
+              <div className="space-y-5">
+                {reviews.length === 0 ? (
+                  <div
+                    data-ocid="review.empty_state"
+                    className="bg-cream rounded-2xl p-10 border border-border text-center"
+                  >
+                    <Star
+                      size={36}
+                      className="text-gold mx-auto mb-3 opacity-50"
+                    />
+                    <p className="font-body text-warm-gray text-sm">
+                      Be the first to leave a review!
+                    </p>
+                  </div>
+                ) : (
+                  reviews.map((r, i) => (
+                    <motion.div
+                      key={r.id}
+                      data-ocid={`review.item.${i + 1}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="bg-white rounded-2xl p-6 shadow-card border border-border"
+                    >
+                      <div className="flex gap-1 mb-3">
+                        {Array.from({ length: r.rating }).map((_, j) => (
+                          <Star
+                            key={String(j)}
+                            size={14}
+                            fill="currentColor"
+                            className="text-gold"
+                          />
+                        ))}
+                      </div>
+                      <p className="font-body text-foreground/80 text-sm leading-relaxed mb-4 italic">
+                        &ldquo;{r.feedback}&rdquo;
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-cream-deep flex items-center justify-center font-display font-bold text-gold text-sm">
+                          {r.name[0]}
+                        </div>
+                        <div>
+                          <p className="font-body font-semibold text-sm text-foreground">
+                            {r.name}
+                          </p>
+                          <p className="font-body text-xs text-warm-gray">
+                            {r.date}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </FadeSection>
+          </div>
+        </div>
+      </section>
+
       {/* Delivery & Payment Section */}
       <section className="py-20 md:py-24 bg-cream">
         <div className="max-w-6xl mx-auto px-6 md:px-8">
@@ -697,7 +1002,7 @@ export default function App() {
                   </h3>
                   <div className="space-y-4">
                     <a
-                      href="https://wa.me/8801700000000"
+                      href={`https://wa.me/${WHATSAPP_NUMBER}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       data-ocid="contact.whatsapp.button"
@@ -711,7 +1016,29 @@ export default function App() {
                           WhatsApp
                         </p>
                         <p className="font-body text-xs text-warm-gray">
-                          Chat with us instantly
+                          +880 1945273697
+                        </p>
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className="ml-auto text-warm-gray group-hover:text-gold transition-colors"
+                      />
+                    </a>
+
+                    <a
+                      href="tel:+8801945273697"
+                      data-ocid="contact.phone.button"
+                      className="flex items-center gap-4 p-4 rounded-xl bg-cream border border-border hover:border-gold transition-all duration-200 group"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Phone size={20} className="text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-body font-semibold text-sm text-foreground group-hover:text-gold transition-colors">
+                          Phone
+                        </p>
+                        <p className="font-body text-xs text-warm-gray">
+                          +880 1945273697
                         </p>
                       </div>
                       <ChevronRight
@@ -744,19 +1071,61 @@ export default function App() {
                       />
                     </a>
 
-                    <div className="flex items-center gap-4 p-4 rounded-xl bg-cream border border-border">
+                    <a
+                      href="mailto:whiiam84@gmail.com"
+                      data-ocid="contact.email.button"
+                      className="flex items-center gap-4 p-4 rounded-xl bg-cream border border-border hover:border-gold transition-all duration-200 group"
+                    >
                       <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
                         <Mail size={20} className="text-amber-600" />
                       </div>
                       <div>
-                        <p className="font-body font-semibold text-sm text-foreground">
+                        <p className="font-body font-semibold text-sm text-foreground group-hover:text-gold transition-colors">
                           Email
                         </p>
                         <p className="font-body text-xs text-warm-gray">
-                          hello@nplsoaps.com
+                          whiiam84@gmail.com
                         </p>
                       </div>
-                    </div>
+                      <ChevronRight
+                        size={16}
+                        className="ml-auto text-warm-gray group-hover:text-gold transition-colors"
+                      />
+                    </a>
+
+                    <a
+                      href="https://www.facebook.com/Jisanchowdhury69/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-ocid="contact.facebook.button"
+                      className="flex items-center gap-4 p-4 rounded-xl bg-cream border border-border hover:border-gold transition-all duration-200 group"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="20"
+                          height="20"
+                          fill="#1877F2"
+                          role="img"
+                          aria-label="Facebook"
+                        >
+                          <title>Facebook</title>
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-body font-semibold text-sm text-foreground group-hover:text-gold transition-colors">
+                          Facebook
+                        </p>
+                        <p className="font-body text-xs text-warm-gray">
+                          Jisan Chowdhury
+                        </p>
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className="ml-auto text-warm-gray group-hover:text-gold transition-colors"
+                      />
+                    </a>
                   </div>
                 </div>
               </div>
@@ -868,7 +1237,9 @@ export default function App() {
               </p>
               <div className="flex gap-3">
                 <a
-                  href="https://wa.me/8801700000000"
+                  href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-gold hover:text-white transition-colors duration-200 text-foreground/60"
                 >
                   <Phone size={16} />
@@ -1102,11 +1473,10 @@ export default function App() {
                   <Button
                     data-ocid="cart.primary_button"
                     className="w-full bg-gold hover:bg-gold-dark text-white font-body font-medium rounded-full py-3 tracking-wide transition-all duration-300"
-                    onClick={() =>
-                      toast.success("Order placed! We'll contact you shortly.")
-                    }
+                    onClick={() => openOrderModal(true)}
                   >
-                    Place Order
+                    <ShoppingBag size={16} className="mr-2" />
+                    Place Order via WhatsApp
                   </Button>
                   <Button
                     variant="outline"
@@ -1118,6 +1488,223 @@ export default function App() {
                   </Button>
                 </div>
               )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Order Modal ── */}
+      <AnimatePresence>
+        {orderModalOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="order-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setOrderModalOpen(false)}
+            />
+
+            {/* Modal Panel */}
+            <motion.div
+              key="order-modal"
+              initial={{ opacity: 0, y: 60, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.97 }}
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
+              data-ocid="order.modal"
+              className="fixed inset-x-4 bottom-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-auto md:w-full md:max-w-lg bg-white rounded-t-3xl md:rounded-2xl z-50 shadow-2xl flex flex-col max-h-[80vh] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="relative px-7 pt-5 pb-3 flex-shrink-0">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-border md:hidden" />
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="font-display text-2xl font-semibold text-foreground">
+                      Place Your Order
+                    </h2>
+                    <p className="font-body text-xs text-warm-gray mt-1">
+                      We'll confirm via WhatsApp
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOrderModalOpen(false)}
+                    data-ocid="order.close_button"
+                    className="p-2 hover:bg-cream rounded-full transition-colors -mt-1 -mr-1"
+                    aria-label="Close order form"
+                  >
+                    <X size={20} className="text-warm-gray" />
+                  </button>
+                </div>
+                {/* Gold divider */}
+                <div className="mt-4 h-px bg-gradient-to-r from-gold/60 via-gold to-gold/60" />
+              </div>
+
+              {/* Form */}
+              <form
+                id="order-form"
+                onSubmit={handleOrderSubmit}
+                className="px-7 pt-2 pb-2 space-y-2 flex-1 overflow-y-auto"
+              >
+                {/* Cart summary (read-only) if from cart */}
+                {orderFromCart && cart.length > 0 && (
+                  <div className="bg-cream rounded-xl border border-border p-4">
+                    <p className="font-body text-xs font-semibold text-gold uppercase tracking-wider mb-3">
+                      🛒 Your Cart
+                    </p>
+                    <div className="space-y-2">
+                      {cart.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="font-body text-sm text-foreground">
+                            {item.name}
+                            <span className="text-warm-gray"> ×{item.qty}</span>
+                          </span>
+                          <span className="font-body text-sm font-semibold text-gold">
+                            ৳{item.priceNum * item.qty}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-border flex justify-between">
+                      <span className="font-body text-sm font-semibold text-foreground">
+                        Total
+                      </span>
+                      <span className="font-display text-base font-bold text-gold">
+                        ৳{cartTotal}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Name */}
+                <div>
+                  <label
+                    htmlFor="order-name"
+                    className="font-body text-sm font-medium text-foreground/80 block mb-1.5"
+                  >
+                    Full Name <span className="text-gold">*</span>
+                  </label>
+                  <Input
+                    id="order-name"
+                    placeholder="e.g. Fatima Khan"
+                    value={orderForm.name}
+                    onChange={(e) =>
+                      setOrderForm((p) => ({ ...p, name: e.target.value }))
+                    }
+                    data-ocid="order.input"
+                    required
+                    className="bg-white border-border focus:border-gold font-body"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label
+                    htmlFor="order-phone"
+                    className="font-body text-sm font-medium text-foreground/80 block mb-1.5"
+                  >
+                    Phone Number <span className="text-gold">*</span>
+                  </label>
+                  <Input
+                    id="order-phone"
+                    type="tel"
+                    placeholder="e.g. 01700000000"
+                    value={orderForm.phone}
+                    onChange={(e) =>
+                      setOrderForm((p) => ({ ...p, phone: e.target.value }))
+                    }
+                    required
+                    className="bg-white border-border focus:border-gold font-body"
+                  />
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label
+                    htmlFor="order-address"
+                    className="font-body text-sm font-medium text-foreground/80 block mb-1.5"
+                  >
+                    Delivery Address <span className="text-gold">*</span>
+                  </label>
+                  <Textarea
+                    id="order-address"
+                    placeholder="House/road, area, city..."
+                    value={orderForm.address}
+                    onChange={(e) =>
+                      setOrderForm((p) => ({ ...p, address: e.target.value }))
+                    }
+                    data-ocid="order.textarea"
+                    required
+                    rows={2}
+                    className="bg-white border-border focus:border-gold font-body resize-none"
+                  />
+                </div>
+
+                {/* Product (only when not from cart) */}
+                {!orderFromCart && (
+                  <div>
+                    <label
+                      htmlFor="order-product"
+                      className="font-body text-sm font-medium text-foreground/80 block mb-1.5"
+                    >
+                      Product <span className="text-gold">*</span>
+                    </label>
+                    <select
+                      id="order-product"
+                      value={orderForm.product}
+                      onChange={(e) =>
+                        setOrderForm((p) => ({
+                          ...p,
+                          product: e.target.value,
+                        }))
+                      }
+                      data-ocid="order.select"
+                      required
+                      className="w-full h-10 rounded-md border border-border bg-white px-3 font-body text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold transition-colors"
+                    >
+                      <option value="" disabled>
+                        Select a product...
+                      </option>
+                      {productOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </form>
+
+              {/* Sticky footer with submit button */}
+              <div className="flex-shrink-0 px-7 py-4 border-t border-border bg-white">
+                <Button
+                  type="submit"
+                  form="order-form"
+                  data-ocid="order.submit_button"
+                  className="w-full bg-gold hover:bg-gold-dark text-white font-body font-medium rounded-full py-3 tracking-wide transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <svg
+                    role="img"
+                    aria-label="WhatsApp"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path d="M12.001 2C6.47813 2 2.00098 6.47715 2.00098 12C2.00098 13.8385 2.49488 15.5657 3.35765 17.0608L2.04297 22L7.10742 20.7119C8.55389 21.5007 10.2224 21.9571 12.001 21.9571C17.5239 21.9571 22.001 17.48 22.001 11.9571C22.001 6.45428 17.5239 2 12.001 2ZM8.51416 6.75684C8.68216 6.75684 8.85415 6.75879 9.00415 6.76562C9.23015 6.77562 9.47912 6.78912 9.71912 7.33887C9.99912 7.97887 10.5761 9.46582 10.6521 9.62402C10.7281 9.78202 10.7799 9.9663 10.6699 10.1743C10.5599 10.3823 10.5041 10.5083 10.3481 10.6963C10.1901 10.8843 10.0175 11.1155 9.87549 11.2715C9.71849 11.4415 9.55548 11.6266 9.73548 11.9346C9.91548 12.2426 10.5684 13.2856 11.5254 14.1426C12.7534 15.2366 13.7916 15.5679 14.0996 15.7239C14.4076 15.8819 14.5875 15.8579 14.7675 15.6499C14.9475 15.4439 15.5724 14.7195 15.7744 14.4095C15.9764 14.1015 16.1784 14.1538 16.4604 14.2578C16.7424 14.3618 18.2244 15.1099 18.5324 15.2679C18.8404 15.4259 19.0384 15.5039 19.1144 15.6259C19.1904 15.7479 19.1904 16.3799 18.9384 17.1169C18.6864 17.8539 17.3944 18.5604 16.8124 18.6084C16.2284 18.6564 15.6925 18.8604 13.0605 17.8164C9.87549 16.5624 7.80914 13.3965 7.65314 13.1885C7.49714 12.9805 6.38867 11.5022 6.38867 9.97363C6.38867 8.44504 7.19581 7.69238 7.48181 7.38574C7.76781 7.07910 8.11016 7.00684 8.29016 7.00684L8.51416 6.75684Z" />
+                  </svg>
+                  Send Order on WhatsApp
+                </Button>
+                <p className="text-center font-body text-xs text-warm-gray mt-2">
+                  You'll be redirected to WhatsApp to confirm your order with us
+                </p>
+              </div>
             </motion.div>
           </>
         )}
