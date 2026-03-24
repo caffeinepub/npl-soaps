@@ -1,0 +1,183 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+
+    /* Luxury Soap Brand Palette - Light Mode Only */
+    --background: 1 0 0;
+    --foreground: 0.17 0 0;
+    --card: 1 0 0;
+    --card-foreground: 0.17 0 0;
+    --popover: 1 0 0;
+    --popover-foreground: 0.17 0 0;
+    --primary: 0.72 0.1 70;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.88 0.03 80;
+    --secondary-foreground: 0.17 0 0;
+    --muted: 0.95 0.02 80;
+    --muted-foreground: 0.47 0.015 75;
+    --accent: 0.72 0.1 70;
+    --accent-foreground: 1 0 0;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.9 0.015 80;
+    --input: 0.9 0.015 80;
+    --ring: 0.72 0.1 70;
+
+    /* Custom brand tokens */
+    --cream: 0.95 0.02 80;
+    --cream-deep: 0.93 0.025 80;
+    --beige: 0.91 0.03 80;
+    --sand: 0.83 0.04 75;
+    --gold: 0.72 0.1 70;
+    --gold-dark: 0.68 0.1 70;
+    --warm-gray: 0.47 0.015 75;
+    --sage: 0.65 0.04 150;
+
+    --chart-1: 0.72 0.1 70;
+    --chart-2: 0.65 0.04 150;
+    --chart-3: 0.91 0.03 80;
+    --chart-4: 0.83 0.04 75;
+    --chart-5: 0.47 0.015 75;
+    --sidebar: 0.95 0.02 80;
+    --sidebar-foreground: 0.17 0 0;
+    --sidebar-primary: 0.72 0.1 70;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.88 0.03 80;
+    --sidebar-accent-foreground: 0.17 0 0;
+    --sidebar-border: 0.9 0.015 80;
+    --sidebar-ring: 0.72 0.1 70;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Playfair Display", serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Playfair Display", serif;
+  }
+
+  .font-body {
+    font-family: "Inter", sans-serif;
+  }
+
+  .text-gold {
+    color: oklch(var(--gold));
+  }
+
+  .bg-cream {
+    background-color: oklch(var(--cream));
+  }
+
+  .bg-cream-deep {
+    background-color: oklch(var(--cream-deep));
+  }
+
+  .bg-beige {
+    background-color: oklch(var(--beige));
+  }
+
+  .bg-sand {
+    background-color: oklch(var(--sand));
+  }
+
+  .border-gold {
+    border-color: oklch(var(--gold));
+  }
+
+  .text-warm-gray {
+    color: oklch(var(--warm-gray));
+  }
+}
+
+/* Scroll-triggered fade-in animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Cart drawer slide-in */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Product card hover */
+.product-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Gold shimmer divider */
+.gold-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.72 0.1 70),
+    transparent
+  );
+  margin: 0 auto;
+}
